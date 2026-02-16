@@ -1,0 +1,99 @@
+{
+  "_comment": "LXGIC Clipper — OpenClaw Cron Templates. Copy and customize for your setup.",
+  "templates": [
+    {
+      "name": "clipper-monitor-15min",
+      "description": "Monitor a livestream every 15 minutes. Records a segment, detects highlights, clips them, and posts to social platforms. Best for active/popular streams.",
+      "schedule": "*/15 * * * *",
+      "command": "clipper-agent.sh run",
+      "env": {
+        "CLIPPER_STREAM_URL": "https://kick.com/YOUR_STREAMER",
+        "CLIPPER_DURATION": "10",
+        "CLIPPER_THRESHOLD": "70",
+        "CLIPPER_CLIP_LENGTH": "30",
+        "CLIPPER_MAX_CLIPS": "2",
+        "CLIPPER_MAX_DAILY": "15",
+        "CLIPPER_PLATFORMS": "tiktok,youtube,x,instagram",
+        "CLIPPER_CAPTION_HASHTAGS": "#clips #viral #highlights",
+        "POSTIZ_API_KEY": "your-postiz-api-key"
+      },
+      "notes": "Adjust CLIPPER_STREAM_URL and POSTIZ_API_KEY. Threshold 70 is a good starting point — lower for more clips, higher for fewer but better clips."
+    },
+    {
+      "name": "clipper-monitor-30min",
+      "description": "Monitor every 30 minutes. Good balance of coverage and resource usage. Best for most use cases.",
+      "schedule": "*/30 * * * *",
+      "command": "clipper-agent.sh run",
+      "env": {
+        "CLIPPER_STREAM_URL": "https://kick.com/YOUR_STREAMER",
+        "CLIPPER_DURATION": "15",
+        "CLIPPER_THRESHOLD": "75",
+        "CLIPPER_CLIP_LENGTH": "30",
+        "CLIPPER_MAX_CLIPS": "3",
+        "CLIPPER_MAX_DAILY": "10",
+        "CLIPPER_PLATFORMS": "tiktok,youtube,x",
+        "POSTIZ_API_KEY": "your-postiz-api-key"
+      },
+      "notes": "Records 15-minute segments every 30 minutes. Max 3 clips per run, 10 per day."
+    },
+    {
+      "name": "clipper-livecheck-only",
+      "description": "Only check if stream is live. Does NOT clip. Useful for monitoring when a streamer goes live.",
+      "schedule": "*/5 * * * *",
+      "command": "clipper-agent.sh check",
+      "env": {
+        "CLIPPER_STREAM_URL": "https://kick.com/YOUR_STREAMER"
+      },
+      "notes": "Lightweight — just checks if the stream is online. Pair with a webhook or notification to trigger clipping."
+    },
+    {
+      "name": "clipper-scheduled-posts",
+      "description": "Record and clip, but schedule posts for peak engagement times instead of posting immediately.",
+      "schedule": "0 */2 * * *",
+      "command": "clipper-agent.sh run",
+      "env": {
+        "CLIPPER_STREAM_URL": "https://kick.com/YOUR_STREAMER",
+        "CLIPPER_DURATION": "15",
+        "CLIPPER_THRESHOLD": "80",
+        "CLIPPER_CLIP_LENGTH": "45",
+        "CLIPPER_MAX_CLIPS": "2",
+        "CLIPPER_MAX_DAILY": "6",
+        "CLIPPER_PLATFORMS": "tiktok,youtube,instagram",
+        "CLIPPER_SCHEDULE": "auto",
+        "POSTIZ_API_KEY": "your-postiz-api-key"
+      },
+      "notes": "Runs every 2 hours. Higher threshold (80) for quality. Schedule 'auto' uses Postiz optimal timing."
+    },
+    {
+      "name": "clipper-dry-run",
+      "description": "Test run — records, detects, and clips but does NOT post. Good for tuning your threshold.",
+      "schedule": "0 */4 * * *",
+      "command": "clipper-agent.sh run",
+      "env": {
+        "CLIPPER_STREAM_URL": "https://kick.com/YOUR_STREAMER",
+        "CLIPPER_DURATION": "10",
+        "CLIPPER_THRESHOLD": "60",
+        "CLIPPER_MAX_CLIPS": "5",
+        "CLIPPER_DRY_RUN": "true"
+      },
+      "notes": "Dry run mode — saves clips locally at ~/.lxgic-clipper/clips/ without posting. Review clips and adjust threshold."
+    }
+  ],
+  "openclaw_setup": {
+    "instructions": [
+      "1. Choose a template above that fits your use case",
+      "2. Replace YOUR_STREAMER with the actual stream URL",
+      "3. Replace 'your-postiz-api-key' with your real Postiz API key",
+      "4. Create the cron job in OpenClaw:",
+      "   openclaw cron create --schedule '*/30 * * * *' --command 'clipper-agent.sh run'",
+      "5. Or run setup.sh for interactive configuration first"
+    ],
+    "tips": [
+      "Start with dry-run to test and tune your threshold",
+      "Threshold 60-70: More clips, some may be lower quality",
+      "Threshold 75-85: Balanced — good for most streamers",
+      "Threshold 85-100: Very selective — only the best moments",
+      "Monitor logs at ~/.lxgic-clipper/logs/ for troubleshooting"
+    ]
+  }
+}
