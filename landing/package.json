@@ -1,0 +1,8 @@
+{
+  "name": "lxgic-clipper-landing",
+  "version": "1.0.0",
+  "description": "LXGIC Clipper landing page",
+  "scripts": {
+    "start": "npx serve ."
+  }
+}

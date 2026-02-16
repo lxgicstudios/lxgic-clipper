@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LXGIC Clipper - AI Auto-Clipping for Streamers</title>
+<meta name="description" content="LXGIC Clipper watches your entire stream, finds the highlights, and posts them to TikTok, YouTube Shorts, Reels, and X. Automatically.">
+<meta property="og:title" content="LXGIC Clipper - AI Auto-Clipping for Streamers">
+<meta property="og:description" content="Your streams have 20+ viral moments. You're missing all of them. LXGIC Clipper fixes that.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@lxgicstudios">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0f;
+  --bg-card:#111119;
+  --bg-card-hover:#16161f;
+  --blue:#3b82f6;
+  --purple:#8b5cf6;
+  --gradient:linear-gradient(135deg,#3b82f6,#8b5cf6);
+  --text:#e2e8f0;
+  --text-dim:#94a3b8;
+  --text-bright:#f8fafc;
+  --border:#1e1e2e;
+  --radius:12px;
+}
+html{scroll-behavior:smooth;scroll-padding-top:80px}
+body{
+  font-family:'Inter',system-ui,-apple-system,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  line-height:1.6;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:var(--blue);text-decoration:none;transition:color .2s}
+a:hover{color:var(--purple)}
+
+/* Nav */
+.nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  background:rgba(10,10,15,.85);
+  backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  padding:0 24px;
+}
+.nav-inner{
+  max-width:1200px;margin:0 auto;
+  display:flex;align-items:center;justify-content:space-between;
+  height:64px;
+}
+.nav-logo{
+  font-weight:800;font-size:1.1rem;
+  background:var(--gradient);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  letter-spacing:-.02em;
+}
+.nav-links{display:flex;gap:28px;align-items:center}
+.nav-links a{color:var(--text-dim);font-size:.875rem;font-weight:500;transition:color .2s}
+.nav-links a:hover{color:var(--text-bright)}
+.nav-cta{
+  background:var(--gradient);
+  color:#fff!important;
+  padding:8px 20px;
+  border-radius:8px;
+  font-weight:600;
+  font-size:.875rem;
+  -webkit-text-fill-color:#fff;
+  transition:opacity .2s;
+}
+.nav-cta:hover{opacity:.9}
+@media(max-width:768px){
+  .nav-links a:not(.nav-cta){display:none}
+}
+
+/* Shared */
+.container{max-width:1200px;margin:0 auto;padding:0 24px}
+section{padding:100px 0}
+@media(max-width:768px){section{padding:72px 0}}
+
+.section-label{
+  font-size:.75rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:12px;
+}
+.section-title{
+  font-size:clamp(1.75rem,4vw,2.5rem);
+  font-weight:800;line-height:1.15;
+  color:var(--text-bright);
+  margin-bottom:20px;
+  letter-spacing:-.03em;
+}
+.section-sub{
+  font-size:1.05rem;color:var(--text-dim);
+  max-width:600px;line-height:1.7;
+}
+
+/* Fade-in animation */
+.fade-in{opacity:0;transform:translateY(28px);transition:opacity .7s ease,transform .7s ease}
+.fade-in.visible{opacity:1;transform:translateY(0)}
+
+/* ============ HERO ============ */
+.hero{
+  padding:160px 0 120px;
+  text-align:center;
+  position:relative;
+  overflow:hidden;
+}
+.hero::before{
+  content:'';position:absolute;top:-40%;left:50%;transform:translateX(-50%);
+  width:800px;height:800px;
+  background:radial-gradient(circle,rgba(59,130,246,.12) 0%,rgba(139,92,246,.08) 40%,transparent 70%);
+  pointer-events:none;
+}
+.hero h1{
+  font-size:clamp(2rem,5.5vw,3.5rem);
+  font-weight:800;line-height:1.1;
+  color:var(--text-bright);
+  max-width:800px;margin:0 auto 24px;
+  letter-spacing:-.04em;
+}
+.hero p{
+  font-size:clamp(1rem,2vw,1.2rem);
+  color:var(--text-dim);
+  max-width:640px;margin:0 auto 40px;
+  line-height:1.7;
+}
+.btn-primary{
+  display:inline-block;
+  background:var(--gradient);
+  color:#fff;
+  padding:16px 40px;
+  border-radius:10px;
+  font-size:1.05rem;
+  font-weight:700;
+  letter-spacing:-.01em;
+  transition:transform .2s,box-shadow .2s;
+  box-shadow:0 0 32px rgba(59,130,246,.25);
+}
+.btn-primary:hover{
+  transform:translateY(-2px);
+  box-shadow:0 0 48px rgba(59,130,246,.35);
+  color:#fff;
+}
+.hero-platforms{
+  margin-top:48px;
+  color:var(--text-dim);
+  font-size:.85rem;
+  font-weight:500;
+}
+.hero-platforms span{
+  display:inline-block;
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  padding:6px 14px;
+  border-radius:20px;
+  margin:4px;
+  font-size:.8rem;
+}
+
+/* ============ PROBLEM ============ */
+.problem{background:var(--bg)}
+.problem-statement{
+  font-size:clamp(1.3rem,3vw,1.8rem);
+  font-weight:700;
+  color:var(--text-bright);
+  line-height:1.4;
+  max-width:760px;
+  margin-bottom:48px;
+  letter-spacing:-.02em;
+}
+.problem-statement em{
+  font-style:normal;
+  background:var(--gradient);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.pain-points{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:20px;
+}
+.pain-card{
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:28px;
+}
+.pain-card h3{
+  font-size:1.05rem;font-weight:700;
+  color:var(--text-bright);margin-bottom:8px;
+}
+.pain-card p{color:var(--text-dim);font-size:.925rem;line-height:1.6}
+
+/* ============ HOW IT WORKS ============ */
+.how{background:var(--bg-card)}
+.steps{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+  gap:24px;
+  margin-top:48px;
+}
+.step{
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:36px 28px;
+  position:relative;
+  transition:border-color .3s;
+}
+.step:hover{border-color:var(--blue)}
+.step-num{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:40px;height:40px;
+  border-radius:10px;
+  background:var(--gradient);
+  color:#fff;font-weight:800;font-size:.95rem;
+  margin-bottom:20px;
+}
+.step h3{
+  font-size:1.15rem;font-weight:700;
+  color:var(--text-bright);margin-bottom:10px;
+}
+.step p{color:var(--text-dim);font-size:.925rem;line-height:1.6}
+
+/* ============ ROI CALCULATOR ============ */
+.calc{background:var(--bg)}
+.calc-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:32px;
+  margin-top:48px;
+}
+@media(max-width:768px){.calc-grid{grid-template-columns:1fr}}
+.calc-inputs{
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:32px;
+}
+.calc-inputs label{
+  display:block;
+  font-size:.85rem;font-weight:600;
+  color:var(--text-dim);
+  margin-bottom:8px;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+}
+.calc-inputs input[type=range]{
+  width:100%;
+  -webkit-appearance:none;
+  appearance:none;
+  height:6px;
+  border-radius:3px;
+  background:var(--border);
+  outline:none;
+  margin-bottom:4px;
+}
+.calc-inputs input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:22px;height:22px;
+  border-radius:50%;
+  background:var(--gradient);
+  cursor:pointer;
+  border:2px solid var(--bg);
+  box-shadow:0 0 12px rgba(59,130,246,.4);
+}
+.calc-inputs input[type=range]::-moz-range-thumb{
+  width:22px;height:22px;
+  border-radius:50%;
+  background:var(--blue);
+  cursor:pointer;
+  border:2px solid var(--bg);
+}
+.input-group{margin-bottom:28px}
+.input-value{
+  font-size:1.5rem;font-weight:800;
+  color:var(--text-bright);
+  margin-bottom:12px;
+}
+.calc-results{
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:32px;
+  display:flex;flex-direction:column;justify-content:center;
+}
+.result-item{
+  padding:20px 0;
+  border-bottom:1px solid var(--border);
+}
+.result-item:last-child{border-bottom:none}
+.result-label{
+  font-size:.8rem;font-weight:600;
+  color:var(--text-dim);
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  margin-bottom:4px;
+}
+.result-value{
+  font-size:1.6rem;font-weight:800;
+  background:var(--gradient);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+
+/* ============ COMPARISON ============ */
+.compare{background:var(--bg-card)}
+.table-wrap{
+  overflow-x:auto;
+  margin-top:48px;
+  border-radius:var(--radius);
+  border:1px solid var(--border);
+}
+.compare table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:640px;
+}
+.compare th,.compare td{
+  padding:16px 20px;
+  text-align:center;
+  font-size:.9rem;
+  border-bottom:1px solid var(--border);
+}
+.compare th{
+  background:var(--bg);
+  font-weight:700;font-size:.8rem;
+  text-transform:uppercase;letter-spacing:.06em;
+  color:var(--text-dim);
+}
+.compare td:first-child,.compare th:first-child{text-align:left;font-weight:600}
+.compare td{color:var(--text-dim)}
+.compare tr.us{background:rgba(59,130,246,.06)}
+.compare tr.us td{color:var(--text-bright);font-weight:600}
+.check{color:#22c55e;font-weight:700;font-size:1.1rem}
+.cross{color:#ef4444;font-weight:700;font-size:1.1rem}
+.partial{color:#eab308;font-weight:700;font-size:1.1rem}
+
+/* ============ PRICING ============ */
+.pricing{background:var(--bg)}
+.pricing-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  gap:20px;
+  margin-top:48px;
+}
+.price-card{
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:32px 24px;
+  display:flex;flex-direction:column;
+  transition:border-color .3s,transform .3s;
+}
+.price-card:hover{border-color:var(--blue);transform:translateY(-4px)}
+.price-card.featured{
+  border-color:var(--blue);
+  position:relative;
+}
+.price-card.featured::before{
+  content:'Most Popular';
+  position:absolute;top:-12px;left:50%;transform:translateX(-50%);
+  background:var(--gradient);
+  color:#fff;
+  font-size:.7rem;font-weight:700;
+  padding:4px 14px;border-radius:20px;
+  text-transform:uppercase;letter-spacing:.06em;
+  white-space:nowrap;
+}
+.price-tier{
+  font-size:.9rem;font-weight:700;
+  color:var(--text-dim);
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  margin-bottom:8px;
+}
+.price-amount{
+  font-size:2.2rem;font-weight:800;
+  color:var(--text-bright);
+  margin-bottom:4px;
+  letter-spacing:-.03em;
+}
+.price-amount span{font-size:.9rem;font-weight:500;color:var(--text-dim)}
+.price-desc{
+  font-size:.875rem;color:var(--text-dim);
+  margin-bottom:24px;padding-bottom:24px;
+  border-bottom:1px solid var(--border);
+}
+.price-features{
+  list-style:none;flex:1;margin-bottom:28px;
+}
+.price-features li{
+  font-size:.875rem;color:var(--text);
+  padding:6px 0;
+  padding-left:20px;
+  position:relative;
+}
+.price-features li::before{
+  content:'';
+  position:absolute;left:0;top:12px;
+  width:8px;height:8px;
+  border-radius:50%;
+  background:var(--gradient);
+}
+.btn-tier{
+  display:block;text-align:center;
+  padding:12px;border-radius:8px;
+  font-weight:700;font-size:.9rem;
+  transition:all .2s;
+}
+.btn-tier-primary{
+  background:var(--gradient);color:#fff;
+  box-shadow:0 0 20px rgba(59,130,246,.2);
+}
+.btn-tier-primary:hover{color:#fff;box-shadow:0 0 32px rgba(59,130,246,.35);transform:translateY(-1px)}
+.btn-tier-secondary{
+  background:transparent;color:var(--text);
+  border:1px solid var(--border);
+}
+.btn-tier-secondary:hover{border-color:var(--blue);color:var(--text-bright)}
+
+/* ============ FAQ ============ */
+.faq{background:var(--bg-card)}
+.faq-list{
+  max-width:720px;
+  margin:48px auto 0;
+}
+.faq-item{
+  border-bottom:1px solid var(--border);
+}
+.faq-q{
+  width:100%;
+  background:none;border:none;
+  color:var(--text-bright);
+  font-size:1rem;font-weight:600;
+  padding:20px 0;
+  cursor:pointer;
+  display:flex;justify-content:space-between;align-items:center;
+  text-align:left;
+  font-family:inherit;
+}
+.faq-q:hover{color:var(--blue)}
+.faq-q::after{
+  content:'+';
+  font-size:1.4rem;font-weight:400;
+  color:var(--text-dim);
+  transition:transform .3s;
+  flex-shrink:0;
+  margin-left:16px;
+}
+.faq-item.open .faq-q::after{
+  content:'-';
+}
+.faq-a{
+  max-height:0;overflow:hidden;
+  transition:max-height .35s ease,padding .35s ease;
+}
+.faq-item.open .faq-a{
+  max-height:200px;
+}
+.faq-a p{
+  color:var(--text-dim);
+  font-size:.925rem;
+  line-height:1.7;
+  padding-bottom:20px;
+}
+
+/* ============ FINAL CTA ============ */
+.final-cta{
+  background:var(--bg);
+  text-align:center;
+  padding:100px 0;
+  position:relative;
+}
+.final-cta::before{
+  content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);
+  width:600px;height:400px;
+  background:radial-gradient(circle,rgba(139,92,246,.1) 0%,transparent 60%);
+  pointer-events:none;
+}
+.final-cta h2{
+  font-size:clamp(1.75rem,4vw,2.5rem);
+  font-weight:800;color:var(--text-bright);
+  margin-bottom:16px;letter-spacing:-.03em;
+}
+.final-cta p{
+  color:var(--text-dim);font-size:1.05rem;
+  margin-bottom:36px;
+}
+
+/* ============ FOOTER ============ */
+footer{
+  background:var(--bg-card);
+  border-top:1px solid var(--border);
+  padding:48px 0;
+  text-align:center;
+}
+.footer-brand{
+  font-weight:800;font-size:1rem;
+  background:var(--gradient);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  margin-bottom:12px;
+}
+.footer-links{
+  display:flex;justify-content:center;gap:24px;
+  margin-bottom:16px;
+}
+.footer-links a{color:var(--text-dim);font-size:.85rem;font-weight:500}
+.footer-links a:hover{color:var(--text-bright)}
+.footer-note{color:var(--text-dim);font-size:.8rem;line-height:1.6;max-width:500px;margin:0 auto}
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav class="nav">
+  <div class="nav-inner">
+    <div class="nav-logo">LXGIC CLIPPER</div>
+    <div class="nav-links">
+      <a href="#how">How It Works</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#faq">FAQ</a>
+      <a href="https://whop.com/lxgic-clipper/" target="_blank" rel="noopener" class="nav-cta">Start Free</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="container fade-in">
+    <h1>Your streams have 20+ viral moments. You're missing all of them.</h1>
+    <p>LXGIC Clipper watches your entire stream, finds the highlights, and posts them to TikTok, YouTube Shorts, Reels, and X. Automatically.</p>
+    <a href="https://whop.com/lxgic-clipper/" target="_blank" rel="noopener" class="btn-primary">Start Free</a>
+    <div class="hero-platforms">
+      <span>Twitch</span>
+      <span>YouTube</span>
+      <span>Kick</span>
+    </div>
+  </div>
+</section>
+
+<!-- Problem -->
+<section class="problem" id="problem">
+  <div class="container">
+    <div class="fade-in">
+      <p class="problem-statement">You stream for 4 hours. 3 people watch live. But those 4 hours have clips that could reach <em>100,000.</em></p>
+    </div>
+    <div class="pain-points fade-in">
+      <div class="pain-card">
+        <h3>Editing takes hours</h3>
+        <p>You just finished a 5-hour stream. Now you're supposed to scrub through all of it, find the best 30 seconds, edit, format, caption, and upload? Nobody has time for that.</p>
+      </div>
+      <div class="pain-card">
+        <h3>Clips go stale fast</h3>
+        <p>That insane clutch you pulled off? It's already buried. Algorithms reward speed. If your clip isn't posted within hours, the window closes.</p>
+      </div>
+      <div class="pain-card">
+        <h3>You miss your best moments</h3>
+        <p>You don't even know which parts were clip-worthy. You were busy playing. The best content slips through because nobody's watching for it.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- How It Works -->
+<section class="how" id="how">
+  <div class="container">
+    <div class="fade-in">
+      <p class="section-label">How It Works</p>
+      <h2 class="section-title">Three steps. Zero effort.</h2>
+      <p class="section-sub">Set it up once. It runs every time you go live.</p>
+    </div>
+    <div class="steps fade-in">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h3>Connect your stream</h3>
+        <p>Link your Twitch, YouTube, or Kick channel. Takes about 30 seconds. LXGIC Clipper starts monitoring the moment you go live.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h3>AI finds the highlights</h3>
+        <p>Kills, clutches, funny reactions, chat explosions, hype moments. The AI watches everything and pulls the clips that actually matter.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h3>Clips auto-post everywhere</h3>
+        <p>TikTok, YouTube Shorts, Instagram Reels, X. Formatted, captioned, and posted. You wake up to views you didn't have to work for.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ROI Calculator -->
+<section class="calc" id="calculator">
+  <div class="container">
+    <div class="fade-in">
+      <p class="section-label">ROI Calculator</p>
+      <h2 class="section-title">See what you're leaving on the table.</h2>
+      <p class="section-sub">Drag the sliders. The math speaks for itself.</p>
+    </div>
+    <div class="calc-grid fade-in">
+      <div class="calc-inputs">
+        <div class="input-group">
+          <label>Hours streamed per week</label>
+          <div class="input-value" id="hours-val">10 hours</div>
+          <input type="range" id="hours" min="2" max="40" value="10">
+        </div>
+        <div class="input-group">
+          <label>Current avg views per clip</label>
+          <div class="input-value" id="views-val">500 views</div>
+          <input type="range" id="views" min="50" max="10000" value="500" step="50">
+        </div>
+      </div>
+      <div class="calc-results">
+        <div class="result-item">
+          <div class="result-label">Estimated clips per week</div>
+          <div class="result-value" id="res-clips">25</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">Potential weekly views</div>
+          <div class="result-value" id="res-views">12,500</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">Time saved vs manual editing</div>
+          <div class="result-value" id="res-time">12 hrs/week</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">Money saved vs hiring an editor</div>
+          <div class="result-value" id="res-money">$950/mo</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Comparison -->
+<section class="compare" id="compare">
+  <div class="container">
+    <div class="fade-in">
+      <p class="section-label">Comparison</p>
+      <h2 class="section-title">The only tool that does it all.</h2>
+      <p class="section-sub">We checked. Nobody else covers every box.</p>
+    </div>
+    <div class="table-wrap fade-in">
+      <table>
+        <thead>
+          <tr>
+            <th>Tool</th>
+            <th>AI Clipping</th>
+            <th>Auto-Posting</th>
+            <th>Gaming-Aware</th>
+            <th>Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="us">
+            <td>LXGIC Clipper</td>
+            <td><span class="check">&#10003;</span></td>
+            <td><span class="check">&#10003;</span></td>
+            <td><span class="check">&#10003;</span></td>
+            <td>Free / $29+</td>
+          </tr>
+          <tr>
+            <td>Eklipse</td>
+            <td><span class="check">&#10003;</span></td>
+            <td><span class="cross">&#10007;</span></td>
+            <td><span class="check">&#10003;</span></td>
+            <td>$15+</td>
+          </tr>
+          <tr>
+            <td>Opus Clip</td>
+            <td><span class="check">&#10003;</span></td>
+            <td><span class="partial">~</span></td>
+            <td><span class="cross">&#10007;</span></td>
+            <td>$19+</td>
+          </tr>
+          <tr>
+            <td>Clipbot</td>
+            <td><span class="partial">~</span></td>
+            <td><span class="check">&#10003;</span></td>
+            <td><span class="cross">&#10007;</span></td>
+            <td>$20+</td>
+          </tr>
+          <tr>
+            <td>Medal.tv</td>
+            <td><span class="cross">&#10007;</span></td>
+            <td><span class="cross">&#10007;</span></td>
+            <td><span class="check">&#10003;</span></td>
+            <td>Free</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- Pricing -->
+<section class="pricing" id="pricing">
+  <div class="container">
+    <div class="fade-in">
+      <p class="section-label">Pricing</p>
+      <h2 class="section-title">Start free. Upgrade when you're ready.</h2>
+      <p class="section-sub">No contracts. Cancel anytime. All plans include AI clipping and auto-posting.</p>
+    </div>
+    <div class="pricing-grid fade-in">
+      <!-- Free -->
+      <div class="price-card">
+        <div class="price-tier">Free</div>
+        <div class="price-amount">$0 <span>/mo</span></div>
+        <div class="price-desc">Try it out. No credit card needed.</div>
+        <ul class="price-features">
+          <li>3 clips per stream</li>
+          <li>720p output</li>
+          <li>LXGIC watermark</li>
+          <li>1 connected platform</li>
+          <li>Basic highlight detection</li>
+        </ul>
+        <a href="https://whop.com/lxgic-clipper/" target="_blank" rel="noopener" class="btn-tier btn-tier-secondary">Get Started</a>
+      </div>
+      <!-- Starter -->
+      <div class="price-card">
+        <div class="price-tier">Starter</div>
+        <div class="price-amount">$29 <span>/mo</span></div>
+        <div class="price-desc">For streamers who want consistent growth.</div>
+        <ul class="price-features">
+          <li>15 clips per stream</li>
+          <li>1080p output</li>
+          <li>No watermark</li>
+          <li>3 connected platforms</li>
+          <li>Custom captions</li>
+          <li>Priority processing</li>
+        </ul>
+        <a href="https://whop.com/lxgic-clipper/" target="_blank" rel="noopener" class="btn-tier btn-tier-secondary">Choose Starter</a>
+      </div>
+      <!-- Pro -->
+      <div class="price-card featured">
+        <div class="price-tier">Pro</div>
+        <div class="price-amount">$49 <span>/mo</span></div>
+        <div class="price-desc">Full control. Maximum output.</div>
+        <ul class="price-features">
+          <li>Unlimited clips</li>
+          <li>1080p / 4K output</li>
+          <li>No watermark</li>
+          <li>All platforms connected</li>
+          <li>Custom branding on clips</li>
+          <li>Review before posting</li>
+          <li>Analytics dashboard</li>
+        </ul>
+        <a href="https://whop.com/lxgic-clipper/" target="_blank" rel="noopener" class="btn-tier btn-tier-primary">Choose Pro</a>
+      </div>
+      <!-- Agency -->
+      <div class="price-card">
+        <div class="price-tier">Agency</div>
+        <div class="price-amount">$99 <span>/mo</span></div>
+        <div class="price-desc">Manage multiple creators from one dashboard.</div>
+        <ul class="price-features">
+          <li>Everything in Pro</li>
+          <li>Up to 10 channels</li>
+          <li>Team access</li>
+          <li>White-label clips</li>
+          <li>Bulk scheduling</li>
+          <li>Dedicated support</li>
+          <li>API access</li>
+        </ul>
+        <a href="https://whop.com/lxgic-clipper/" target="_blank" rel="noopener" class="btn-tier btn-tier-secondary">Choose Agency</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq" id="faq">
+  <div class="container">
+    <div class="fade-in">
+      <p class="section-label">FAQ</p>
+      <h2 class="section-title" style="text-align:center">Common questions.</h2>
+    </div>
+    <div class="faq-list fade-in">
+      <div class="faq-item">
+        <button class="faq-q">What streams does it work with?</button>
+        <div class="faq-a"><p>Twitch, YouTube Live, and Kick. Connect any of them in about 30 seconds. We're adding more platforms based on what users request.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">How fast are clips generated?</button>
+        <div class="faq-a"><p>Most clips are ready within minutes of the moment happening. On the Pro plan, clips can be posted to your socials before your stream even ends.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">Can I review clips before they post?</button>
+        <div class="faq-a"><p>Yes. On the Pro and Agency plans, you can enable review mode. Every clip goes to your dashboard for approval before it goes anywhere. Or you can let it run fully automatic. Your call.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">What platforms does it post to?</button>
+        <div class="faq-a"><p>TikTok, YouTube Shorts, Instagram Reels, and X. All formatted correctly for each platform. Vertical, right aspect ratio, captions included.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">Is there a free tier?</button>
+        <div class="faq-a"><p>Yep. The free plan gives you 3 clips per stream at 720p with a small watermark. It's enough to see how it works before you commit to anything.</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">What kind of highlights does the AI detect?</button>
+        <div class="faq-a"><p>Kills, multi-kills, clutches, funny reactions, rage moments, big plays, chat spam/explosions, and hype moments. It's trained on gaming content specifically, not just generic video analysis.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Final CTA -->
+<section class="final-cta">
+  <div class="container fade-in">
+    <h2>Stop streaming into the void.</h2>
+    <p>Every stream you run without clipping is content you'll never get back.</p>
+    <a href="https://whop.com/lxgic-clipper/" target="_blank" rel="noopener" class="btn-primary">Start Free</a>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="container">
+    <div class="footer-brand">Built by LXGIC Studios</div>
+    <div class="footer-links">
+      <a href="https://github.com/lxgicstudios" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://x.com/lxgicstudios" target="_blank" rel="noopener">Twitter</a>
+      <a href="https://whop.com/lxgic-clipper/" target="_blank" rel="noopener">Whop</a>
+    </div>
+    <p class="footer-note">Want more free tools? We have 20+ on our GitHub: <a href="https://github.com/lxgicstudios" target="_blank" rel="noopener">github.com/lxgicstudios</a></p>
+  </div>
+</footer>
+
+<script>
+// ROI Calculator
+const hoursSlider = document.getElementById('hours');
+const viewsSlider = document.getElementById('views');
+const hoursVal = document.getElementById('hours-val');
+const viewsVal = document.getElementById('views-val');
+const resClips = document.getElementById('res-clips');
+const resViews = document.getElementById('res-views');
+const resTime = document.getElementById('res-time');
+const resMoney = document.getElementById('res-money');
+
+function calculate() {
+  const hours = parseInt(hoursSlider.value);
+  const avgViews = parseInt(viewsSlider.value);
+
+  hoursVal.textContent = hours + ' hours';
+  viewsVal.textContent = avgViews.toLocaleString() + ' views';
+
+  // ~2.5 clips per hour of streaming
+  const clipsPerWeek = Math.round(hours * 2.5);
+  // Each clip gets avg views, with a multiplier for multi-platform distribution
+  const weeklyViews = clipsPerWeek * avgViews;
+  // Manual editing: ~30 min per clip
+  const timeSaved = Math.round(clipsPerWeek * 0.5);
+  // Editor cost: $500-2000/mo. We estimate based on clips (scale linearly from ~$750 base)
+  const editorCost = Math.min(2000, Math.max(500, Math.round(clipsPerWeek * 4.2 * 4.3)));
+
+  resClips.textContent = clipsPerWeek;
+  resViews.textContent = weeklyViews.toLocaleString();
+  resTime.textContent = timeSaved + ' hrs/week';
+  resMoney.textContent = '$' + editorCost.toLocaleString() + '/mo';
+}
+
+hoursSlider.addEventListener('input', calculate);
+viewsSlider.addEventListener('input', calculate);
+calculate();
+
+// FAQ Accordion
+document.querySelectorAll('.faq-q').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    const item = this.parentElement;
+    const wasOpen = item.classList.contains('open');
+    // Close all
+    document.querySelectorAll('.faq-item').forEach(function(i) { i.classList.remove('open'); });
+    // Toggle current
+    if (!wasOpen) item.classList.add('open');
+  });
+});
+
+// Scroll fade-in with IntersectionObserver
+const fadeEls = document.querySelectorAll('.fade-in');
+if ('IntersectionObserver' in window) {
+  const observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+
+  fadeEls.forEach(function(el) { observer.observe(el); });
+} else {
+  // Fallback: show everything
+  fadeEls.forEach(function(el) { el.classList.add('visible'); });
+}
+</script>
+
+</body>
+</html>
