@@ -1,0 +1,10 @@
+{
+  "name": "lxgic-clipper",
+  "version": "1.0.0",
+  "description": "Automated livestream clipping + social media posting agent",
+  "homepage": "https://github.com/lxgicstudios/lxgic-clipper",
+  "repository": "lxgicstudios/lxgic-clipper",
+  "author": "LXGIC Studios",
+  "license": "MIT",
+  "keywords": ["ai", "livestream", "clipping", "twitch", "kick", "youtube", "tiktok", "automation", "ffmpeg", "whisper", "openclaw"]
+}
